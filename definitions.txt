@@ -47,10 +47,3 @@ salary_rates = {
 }
 
 
-
-time_type = {
-    1: regular time_in,
-    2: regular time_out,
-    3: overtime_in,
-    4: overtime_out
-}

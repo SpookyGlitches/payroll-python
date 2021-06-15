@@ -1,7 +1,7 @@
 
 import constants
-from datetime import timedelta
 import time
+from datetime import datetime,timedelta
 
 test_case = [
     {
@@ -50,7 +50,7 @@ test_case = [
         ]
     },
     {
-        'employee_code': "A02-0003",
+        'employee_code': "A02-0002",
         'log_records':[
             {
                 "day":"Monday",
@@ -96,24 +96,31 @@ test_case = [
     },
 ]
 
-
+# The main function or the entry point of the program
 def main():
     employees = read_employee_file()
-    employee_code = input("Enter employee code:")
-    employee = get_employee_record(employees,employee_code)
+    while True:
+        employee_code = input("Enter employee code:")
+        # employee_code = "A02D-0003"
+        employee = get_employee_record(employees,employee_code)
+        
+        print_employee_details(employee)
+        log_records = get_input_log_times(employee["name"])
+        # log_records = test_case[1]["log_records"]
+        coverage_date = input("Enter the coverage date for this payroll:")
+        # coverage_date = ";"
+        payroll = calc_payroll(log_records,coverage_date,employee)
+        
+        print_payroll_details(payroll)
+        save_to_dtr(employee_code,log_records)
 
-    if employee == None:
-        print("Cannot find employee. Qutting...")
-        quit()
-    
-    print_employee_details(employee)
-    log_records = get_input_log_times(employee["name"])
-    coverage_date = input("Enter the coverage date for this payroll:")
-    payroll = calc_payroll(log_records,coverage_date,employee)
-    
-    print_payroll_details(payroll)
 
 
+# Calculates the employee's payroll for the week
+# @param log_records - the inputs for an employee, the time-in and out, overtime, and if holiday
+# @param coverage_date - date covered for the payroll
+# @param employee - dictionary containing the employee details
+# @returns the calculated payroll with all the details
 def calc_payroll(log_records,coverage_date,employee):
     payroll = {
         "coverage": coverage_date,
@@ -151,24 +158,24 @@ def calc_payroll(log_records,coverage_date,employee):
 
 
 
-
-
-
-
-# params:
-#   employee_code
-# returns:
-#   employee dict if found else None
-
+# Gets the employee with the matched employee code from a given list
+# @param employees - list of employee dictionary
+# @param employee_code - the code of the employee to look for
+# @returns an employee dictionary if found else the program quits
 def get_employee_record(employees,employee_code):
+
     for employee in employees:  
         if employee["code"] == employee_code:
             employee["salary_rate"] = get_salary_rate(employee["salary_level"])
             return employee
-    return None
+    else:
+        print("Cannot find employee. Quitting...")
+        quit()
 
 
 
+# Reads the employee.txt file and stores it to a list 
+# @returns a list of employees dictionary
 def read_employee_file():
     employees = []
     employees_file_name = "employee.txt"
@@ -183,16 +190,49 @@ def read_employee_file():
             })
         file.close()
     except:
+        # If employee.txt doesn't exist, the program quits
         print("Employee file does not exist or cannot read the file. ")
         print("Quitting...")
         quit()
     return employees
 
-# params:
-#   employee_name
-# returns:
-#   a list/array of log_times 
 
+
+# Saves the log_records of an employee to the file "dtr.txt"
+# @param employee_code - the code of the employee for which the details to be saved
+# @param log_records - the inputs of the user (time-ins and outs, overtimes, is_holiday)
+def save_to_dtr(employee_code,log_records):
+    dtr_file_name = "dtr.txt"
+    found = False
+    # try:
+    file = open(dtr_file_name,'r+')
+    for line in file:
+        val_array = line.split(',')
+        if val_array[0] == employee_code:
+            found = True
+            break
+
+    arr = []
+    for record in log_records:
+        # what the code below does is that it turns it to a 24-hour time string like 00:00, 23:33
+        arr.append(str(record["time_in"].tm_hour).zfill(2) + ":"+ str(record["time_in"].tm_min).zfill(2))
+        arr.append(str(record["time_out"].tm_hour).zfill(2) + ":"+ str(record["time_out"].tm_min).zfill(2))
+        arr.append(str(record["overtime_in"].tm_hour).zfill(2) + ":"+ str(record["overtime_in"].tm_min).zfill(2))
+        arr.append(str(record["overtime_out"].tm_hour).zfill(2) + ":"+ str(record["overtime_in"].tm_min).zfill(2))
+    string = ""
+    if not found:
+        # we have to write a new line for the employee since it doesn't have its own line
+        string += "\n" + employee_code 
+    string += ","
+    string += ",".join(arr) # now we can get something like A02-005,00:00,23:33
+    file.write(string)
+    file.close()
+
+
+
+# Gets inputs (time-ins and outs, overtime-ins and outs, is_holiday) from a user
+# @param employee_name - the name of the employee
+# @returns a list of  dictionary of the inputs of user 
 def get_input_log_times(employee_name):
     log_records = []
     days = ["Monday","Tuesday","Wednesday","Thursday","Friday"]
@@ -214,12 +254,26 @@ def get_input_log_times(employee_name):
 
 
 
+# Asks for a time 
+# @param employee_name - the name of the employee
+# @param day - like Monday, Tuesday and etc..
+# @param type - "time" or "overtime"
+# @param in_our_out - if the input time is a time out or a time in
+# @param time_in - null if the type is a time out else the previously inputted time
+# @returns the validated time 
 def ask_time(employee_name,day,type,in_or_out,time_in):
     time = input("Enter %s %s of %s for %s:" %(type,in_or_out,employee_name,day))
     time = validate_time(time,type,in_or_out,time_in)
     return time
 
 
+
+# Validates the time
+# @param time - the inputted time
+# @param type - "time" or "overtime"
+# @param in_our_out - if the input time is a time out or a time in
+# @param time_in - null if the type is a time out else the previously inputted time
+# @returns the validated time 
 def validate_time(time,type,in_or_out,time_in):
     while True:
         try:
@@ -238,11 +292,13 @@ def validate_time(time,type,in_or_out,time_in):
         except Exception as e:
             print(e)
             time = input("Input again:")
-# params:
-#   time -> input time
-# returns:
-#   the parsed time 
 
+
+
+
+# Parses the time string 
+# @param input_time - the inputted time 
+# @returns a time struct if valid or raises an exception
 def parse_time(input_time):
     try:
         parsed_time = time.strptime(input_time, "%H:%M")
@@ -251,10 +307,10 @@ def parse_time(input_time):
         raise Exception("Error: Invalid time")
 
 
-# params;
-#   day  
-# returns:
-#   True or False
+
+# Asks the user if the day is holidiay. It converts the Yes or No of the user to True or False 
+# @param day - "Monday","Tuesday" and etc.
+# @returns True if it is False if not
 def ask_if_holiday(day):
     is_holiday = ""
     while ((is_holiday != "YES") and  (is_holiday != "NO")):
@@ -265,9 +321,10 @@ def ask_if_holiday(day):
 
 
 
-# main computations
-
-
+# Calculates the number of hours the employee was late
+# @param time_in - the time in of the employee of type timedelta
+# @param in_hr - the time in hour of the employee 
+# returns the late hours
 def calc_late_hrs(time_in,in_hr):
     late_hrs = 0.0
     work_start_td = timedelta(hours=constants.WORK["start"].tm_hour,minutes=constants.WORK["start"].tm_min)
@@ -279,6 +336,10 @@ def calc_late_hrs(time_in,in_hr):
     return late_hrs
 
 
+
+# Calculates the number of hours the the employee lack for a day
+# @param time_out - the time out of the employee of type timedelta
+# returns the undertime hours
 def calc_under_time(time_out):
     req_time_out = timedelta(hours=constants.WORK["end"].tm_hour, minutes=constants.WORK["end"].tm_min)
     if time_out >= req_time_out:
@@ -288,6 +349,13 @@ def calc_under_time(time_out):
         return convert_to_hrs(diff.seconds)
 
 
+
+# Calculates the number of hours the employee worked for a day
+# @param record - a dictionary containing the input times of type timedelta
+# @param late  - late hours
+# @param undertime - undertime hours
+# @param is_holiday - if the day was a holiday or not
+# @returns the calculated hours
 def calc_daily_work_hrs(record, late, undertime,is_holiday):
     work_hours = constants.REQUIRED_WORK_HOURS
     if is_holiday:
@@ -297,6 +365,11 @@ def calc_daily_work_hrs(record, late, undertime,is_holiday):
     return work_hours - (late + undertime)
 
 
+
+# Calculates the overtime hours for the day
+# @param overtime_out - when the employee logged out for overtime of type timedelta 
+# @param overtime_in - when the employee logged in for overtime of type timedelta
+# @returns the calculated hours 
 def calc_overtime_hrs(overtime_out, overtime_in):
     overtime = constants.OVERTIME
     ot_start_td = timedelta(hours=overtime["start"].tm_hour, minutes=overtime["end"].tm_min)
@@ -311,10 +384,21 @@ def calc_overtime_hrs(overtime_out, overtime_in):
     return convert_to_hrs(overtime.seconds)
 
 
+
+# Calculates the income accumulated from the overtime for a day 
+# @param overtime_hrs - the overtime hours 
+# @param employee_level - the employee's salary level either 1,2 or 3
+# @returns the day overtime income
 def calc_day_overtime_inc(overtime_hrs,employee_level):
     return calc_hrly_overtime_rate(employee_level) * overtime_hrs
 
 
+
+# Calculates the income for the day 
+# @param daily_work_hrs - the hours worked for the day 
+# @param salary_level - the employee's salary level either 1,2 or 3
+# @param is_holiday - if the day was a holiday or not
+# @returns the income for the day
 def calc_daily_regular_inc(daily_work_hrs,salary_level,is_holiday):
     hourly_rate = calc_hrly_rate(salary_level)
     hourly_rate *= daily_work_hrs
@@ -323,38 +407,69 @@ def calc_daily_regular_inc(daily_work_hrs,salary_level,is_holiday):
     return hourly_rate
 
 
-def calc_wgsi(regular_inc,overtime):
-    return regular_inc + overtime
+
+# Calculates the Weekly Gross Salary Income (WGSI)
+# @param regular_inc - the regular income 
+# @param overtime_inc - the overtime income
+# @returns the calculated wgsi
+def calc_wgsi(regular_inc,overtime_inc):
+    return regular_inc + overtime_inc
 
 
+
+# Calculates the Weekly Net Salary Income (WNSI)
+# @param wgsi - the Weekly Gross Salary Income (WGSI)
+# @param deductions - the tax and sss of type dictionary
+# @returns the calculated wnsi
 def calc_wnsi(wgsi,deductions):
     return (wgsi-(deductions["tax"]+deductions["sss"])) + constants.ALLOWANCE
 
 
-def calc_tax(weekly_gross_inc):
-    return weekly_gross_inc * constants.TAX_PERCENTAGE
+
+# Calculates the tax to be deducted from the WGSI
+# @param wgsi - the Weekly Gross Salary Income (WGSI)
+# @returns the calculated tax amount
+def calc_tax(wgsi):
+    return wgsi * constants.TAX_PERCENTAGE
     
 
+
+# Calculates the gsis/sss to be deducted from the WGSI
+# @param salary_level - the employee's salary level either 1,2 or 3
+# @returns the gsis/sss amount
 def calc_gsis(salary_level):
     return constants.GSIS_DEDUCTIONS[str(salary_level)] * get_salary_rate(salary_level)
 
-# end of main computations
 
 
-
-
+# Calculates the hourly rate of the employee
+# @param salary_level - the employee's salary level either 1,2 or 3
+# @returns the hourly rate
 def calc_hrly_rate(salary_level):
     return get_salary_rate(salary_level) / 8
 
 
+
+# Calculates the hourly rate when an employee overtimes
+# @param salary_level - the employee's salary level either 1,2 or 3
+# @returns the hourly overtime rate
 def calc_hrly_overtime_rate(salary_level):
     return calc_hrly_rate(salary_level) * 1.1
 
-    
+
+
+# Gets the salary rate of an employee 
+# @param salary_level - the employee's salary level either 1,2 or 3
+# @returns the salary rate    
 def get_salary_rate(salary_level):
     return constants.SALARY_RATES[str(salary_level)]
 
 
+
+# Checks if the employee is absent or not
+# @param time_in - the time in of the employee of type timedelta
+# @param time_in - the time out of the employee of type timedelta
+# @returns the True if the employee was absent else False
 def is_employee_absent(time_in,time_out):
     absent_time = timedelta(hours=0, minutes=0)
     if absent_time == time_in == time_out:
@@ -363,10 +478,17 @@ def is_employee_absent(time_in,time_out):
         return False
 
 
+
+# Converts seconds to hours
+# @param seconds - the seconds to convert
+# @returns hours 
 def convert_to_hrs(seconds):
     return seconds/60/60
 
 
+
+# Prints all the payroll details
+# @param payroll - a dictionary returned by calc_payroll
 def print_payroll_details(payroll):
     currency = constants.CURRENCY
     print("Date Covered: %s" %(payroll["coverage"]))
@@ -381,6 +503,9 @@ def print_payroll_details(payroll):
     print("Net Income: %s %.2f" %(currency,payroll["net_inc"]))
 
 
+
+# Prints all the employee details
+# @param employee - a dictionary returned by get_employee_record
 def print_employee_details(employee):
     print("==================================================")
     print("Employee Name: %s" %(employee["name"]))
@@ -390,6 +515,10 @@ def print_employee_details(employee):
     print("==================================================")
 
 
+
+# Converts a dictionary of struct time to a dictionary of timedelta
+# @param record - the dictionary of struct time
+# @returns a dictionary of timedelta 
 def convert_to_td(record):
     return {
         "time_out": timedelta(hours=record["time_out"].tm_hour, minutes=record["time_out"].tm_min),
@@ -397,6 +526,7 @@ def convert_to_td(record):
         "overtime_in": timedelta(hours=record["overtime_in"].tm_hour, minutes=record["overtime_in"].tm_min),
         "overtime_out": timedelta(hours=record["overtime_out"].tm_hour, minutes=record["overtime_out"].tm_min)
     }
+
 
 
 main()
