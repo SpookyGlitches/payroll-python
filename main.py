@@ -354,12 +354,9 @@ def calc_under_time(time_out):
 # @param record - a dictionary containing the input times of type timedelta
 # @param late  - late hours
 # @param undertime - undertime hours
-# @param is_holiday - if the day was a holiday or not
 # @returns the calculated hours
-def calc_daily_work_hrs(record, late, undertime,is_holiday):
+def calc_daily_work_hrs(record, late, undertime):
     work_hours = constants.REQUIRED_WORK_HOURS
-    # if is_holiday:
-    #     return 0 # holidays not counted in the paper
     if is_employee_absent(record["time_in"], record["time_out"]):
         work_hours = 0
     return work_hours - (late + undertime)
@@ -388,6 +385,7 @@ def calc_overtime_hrs(overtime_out, overtime_in):
 # Calculates the income accumulated from the overtime for a day 
 # @param overtime_hrs - the overtime hours 
 # @param employee_level - the employee's salary level either 1,2 or 3
+# @param is_holiday - if the day was a holiday or not
 # @returns the day overtime income
 def calc_day_overtime_inc(overtime_hrs,employee_level,is_holiday):
     return calc_hrly_overtime_rate(employee_level,is_holiday) * overtime_hrs
@@ -442,6 +440,7 @@ def calc_gsis(salary_level):
 
 # Calculates the hourly rate of the employee
 # @param salary_level - the employee's salary level either 1,2 or 3
+# @param is_holiday - if the day was a holiday or not
 # @returns the hourly rate
 def calc_hrly_rate(salary_level, is_holiday):
     rate = get_salary_rate(salary_level) / 8
@@ -453,6 +452,7 @@ def calc_hrly_rate(salary_level, is_holiday):
 
 # Calculates the hourly rate when an employee overtimes
 # @param salary_level - the employee's salary level either 1,2 or 3
+# @param is_holiday - if the day was a holiday or not
 # @returns the hourly overtime rate
 def calc_hrly_overtime_rate(salary_level,is_holiday):
     return calc_hrly_rate(salary_level,is_holiday) * 1.1
