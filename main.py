@@ -142,7 +142,7 @@ def calc_payroll(log_records,coverage_date,employee):
 
         late_hrs = calc_late_hrs(td_record["time_in"],record["time_in"].tm_hour)
         under_time_hrs = calc_under_time(td_record["time_out"])
-        day_work_hrs = calc_daily_work_hrs(td_record,late_hrs,under_time_hrs,record["is_holiday"])
+        day_work_hrs = calc_daily_work_hrs(td_record,late_hrs,under_time_hrs)
         overtime_hrs = calc_overtime_hrs(td_record["overtime_out"],td_record["overtime_in"])
         payroll["overtime_hrs"] += overtime_hrs
         payroll["total_work_hrs"] += day_work_hrs
