@@ -50,7 +50,7 @@ test_case = [
         ]
     },
     {
-        'employee_code': "A02-0002",
+        'employee_code': "A02-0003",
         'log_records':[
             {
                 "day":"Monday",
@@ -99,20 +99,20 @@ test_case = [
 # The main function or the entry point of the program
 def main():
     employees = read_employee_file()
-    while True:
-        employee_code = input("Enter employee code:")
-        # employee_code = "A02D-0003"
-        employee = get_employee_record(employees,employee_code)
-        
-        print_employee_details(employee)
-        log_records = get_input_log_times(employee["name"])
-        # log_records = test_case[1]["log_records"]
-        coverage_date = input("Enter the coverage date for this payroll:")
-        # coverage_date = ";"
-        payroll = calc_payroll(log_records,coverage_date,employee)
-        
-        print_payroll_details(payroll)
-        save_to_dtr(employee_code,log_records)
+        # while True:
+        # employee_code = input("Enter employee code:")
+    employee_code = "A02-0001"
+    employee = get_employee_record(employees,employee_code)
+    
+    print_employee_details(employee)
+    # log_records = get_input_log_times(employee["name"])
+    log_records = test_case[0]["log_records"]
+    # coverage_date = input("Enter the coverage date for this payroll:")
+    coverage_date = ";"
+    payroll = calc_payroll(log_records,coverage_date,employee)
+    
+    print_payroll_details(payroll)
+    save_to_dtr(employee_code,log_records)
 
 
 
@@ -147,7 +147,7 @@ def calc_payroll(log_records,coverage_date,employee):
         payroll["overtime_hrs"] += overtime_hrs
         payroll["total_work_hrs"] += day_work_hrs
         payroll["regular_inc"] += calc_daily_regular_inc(day_work_hrs,employee["salary_level"],record["is_holiday"])
-        payroll["overtime_inc"] += calc_day_overtime_inc(overtime_hrs,employee["salary_level"])
+        payroll["overtime_inc"] += calc_day_overtime_inc(overtime_hrs,employee["salary_level"],record["is_holiday"])
     
     payroll["gross_inc"] = calc_wgsi(payroll["regular_inc"], payroll["overtime_inc"])
     payroll["deductions"]["tax"] = calc_tax(payroll["gross_inc"])
@@ -358,8 +358,8 @@ def calc_under_time(time_out):
 # @returns the calculated hours
 def calc_daily_work_hrs(record, late, undertime,is_holiday):
     work_hours = constants.REQUIRED_WORK_HOURS
-    if is_holiday:
-        return 0 # holidays not counted in the paper
+    # if is_holiday:
+    #     return 0 # holidays not counted in the paper
     if is_employee_absent(record["time_in"], record["time_out"]):
         work_hours = 0
     return work_hours - (late + undertime)
@@ -389,8 +389,8 @@ def calc_overtime_hrs(overtime_out, overtime_in):
 # @param overtime_hrs - the overtime hours 
 # @param employee_level - the employee's salary level either 1,2 or 3
 # @returns the day overtime income
-def calc_day_overtime_inc(overtime_hrs,employee_level):
-    return calc_hrly_overtime_rate(employee_level) * overtime_hrs
+def calc_day_overtime_inc(overtime_hrs,employee_level,is_holiday):
+    return calc_hrly_overtime_rate(employee_level,is_holiday) * overtime_hrs
 
 
 
@@ -400,11 +400,9 @@ def calc_day_overtime_inc(overtime_hrs,employee_level):
 # @param is_holiday - if the day was a holiday or not
 # @returns the income for the day
 def calc_daily_regular_inc(daily_work_hrs,salary_level,is_holiday):
-    hourly_rate = calc_hrly_rate(salary_level)
-    hourly_rate *= daily_work_hrs
-    if is_holiday:
-        hourly_rate *= 1.1
-    return hourly_rate
+    hourly_rate = calc_hrly_rate(salary_level,is_holiday)
+    regular_inc = hourly_rate * daily_work_hrs
+    return regular_inc
 
 
 
@@ -445,16 +443,19 @@ def calc_gsis(salary_level):
 # Calculates the hourly rate of the employee
 # @param salary_level - the employee's salary level either 1,2 or 3
 # @returns the hourly rate
-def calc_hrly_rate(salary_level):
-    return get_salary_rate(salary_level) / 8
+def calc_hrly_rate(salary_level, is_holiday):
+    rate = get_salary_rate(salary_level) / 8
+    if is_holiday:
+        rate *= 1.1  
+    return rate
 
 
 
 # Calculates the hourly rate when an employee overtimes
 # @param salary_level - the employee's salary level either 1,2 or 3
 # @returns the hourly overtime rate
-def calc_hrly_overtime_rate(salary_level):
-    return calc_hrly_rate(salary_level) * 1.1
+def calc_hrly_overtime_rate(salary_level,is_holiday):
+    return calc_hrly_rate(salary_level,is_holiday) * 1.1
 
 
 
