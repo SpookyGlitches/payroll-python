@@ -1,8 +1,9 @@
-Holidays are not counted since
-To calculate for regular income, it needs hourly rate and daily work hours,
-To calculate for daily work hours, we need late and undertime hours.
+The outputs of the test case are wrong and the specification lacked details on where to put the holiday working hours.
 
-But for holidays, there are no late and undertime hours means we put 0 there.
-If we put that as 0, then every holidays we give them 8 hours.
-But how do we differentiate people who worked on holidays and those who didn't?
-We cant.
+So what I did was to treat the holidays as a regular working day but with a
+different pay or we can also call it as a regular working holiday.
+
+So daily work hours now contains the regular working hours + holiday working hours
+
+And the employee can also choose to work at a holiday and overtime.
+So if holiday and overtime, basic hourly rate \* 1.1 \* 1.1
