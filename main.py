@@ -3,112 +3,17 @@ import constants
 import time
 from datetime import datetime,timedelta
 
-test_case = [
-    {
-        'employee_code': "A02-0001",
-        'log_records':[
-            {
-                "day":"Monday",
-                "time_in":time.strptime("08:00", "%H:%M"),
-                "time_out":time.strptime("17:01", "%H:%M"),
-                "is_holiday":False,
-                "overtime_in":time.strptime("17:30", "%H:%M"),
-                "overtime_out":time.strptime("20:30", "%H:%M")
-            },
-            {
-                "day":"Tuesday",
-                "time_in":time.strptime("08:00", "%H:%M"),
-                "time_out":time.strptime("17:01", "%H:%M"),
-                "is_holiday":False,
-                "overtime_in":time.strptime("17:30", "%H:%M"),
-                "overtime_out":time.strptime("18:30", "%H:%M")
-            },
-            {
-                "day":"Wednesday",
-                "time_in":time.strptime("08:00", "%H:%M"),
-                "time_out":time.strptime("17:01", "%H:%M"),
-                "is_holiday":False,
-                "overtime_in":time.strptime("00:00", "%H:%M"),
-                "overtime_out":time.strptime("00:00", "%H:%M")
-            },
-            {
-                "day":"Thursday",
-                "time_in":time.strptime("08:00", "%H:%M"),
-                "time_out":time.strptime("17:01", "%H:%M"),
-                "is_holiday":True,
-                "overtime_in":time.strptime("00:00", "%H:%M"),
-                "overtime_out":time.strptime("00:00", "%H:%M")
-            },
-            {
-                "day":"Friday",
-                "time_in":time.strptime("08:00", "%H:%M"),
-                "time_out":time.strptime("17:01", "%H:%M"),
-                "is_holiday":False,
-                "overtime_in":time.strptime("00:00", "%H:%M"),
-                "overtime_out":time.strptime("00:00", "%H:%M")
-            }
-        ]
-    },
-    {
-        'employee_code': "A02-0003",
-        'log_records':[
-            {
-                "day":"Monday",
-                "time_in":time.strptime("01:00", "%H:%M"),
-                "time_out":time.strptime("17:01", "%H:%M"),
-                "is_holiday":False,
-                "overtime_in":time.strptime("17:30", "%H:%M"),
-                "overtime_out":time.strptime("20:30", "%H:%M")
-            },
-            {
-                "day":"Tuesday",
-                "time_in":time.strptime("13:00", "%H:%M"),
-                "time_out":time.strptime("17:01", "%H:%M"),
-                "is_holiday":False,
-                "overtime_in":time.strptime("17:30", "%H:%M"),
-                "overtime_out":time.strptime("18:30", "%H:%M")
-            },
-            {
-                "day":"Wednesday",
-                "time_in":time.strptime("08:00", "%H:%M"),
-                "time_out":time.strptime("17:01", "%H:%M"),
-                "is_holiday":False,
-                "overtime_in":time.strptime("00:00", "%H:%M"),
-                "overtime_out":time.strptime("00:00", "%H:%M")
-            },
-            {
-                "day":"Thursday",
-                "time_in":time.strptime("08:00", "%H:%M"),
-                "time_out":time.strptime("17:01", "%H:%M"),
-                "is_holiday":True,
-                "overtime_in":time.strptime("17:30", "%H:%M"),
-                "overtime_out":time.strptime("20:30", "%H:%M")
-            },
-            {
-                "day":"Friday",
-                "time_in":time.strptime("08:00", "%H:%M"),
-                "time_out":time.strptime("17:01", "%H:%M"),
-                "is_holiday":False,
-                "overtime_in":time.strptime("00:00", "%H:%M"),
-                "overtime_out":time.strptime("00:00", "%H:%M")
-            }
-        ]
-    },
-]
 
 # The main function or the entry point of the program
 def main():
     employees = read_employee_file()
     while True:
         employee_code = input("Enter employee code:")
-        # employee_code = "A02-0003"
         employee = get_employee_record(employees,employee_code)
         
         print_employee_details(employee)
         log_records = get_input_log_times(employee["name"])
-        # log_records = test_case[1]["log_records"]
         coverage_date = input("Enter the coverage date for this payroll:")
-        # coverage_date = ";"
         payroll = calc_payroll(log_records,coverage_date,employee)
         
         print_payroll_details(payroll)
